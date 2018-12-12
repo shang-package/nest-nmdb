@@ -1,4 +1,4 @@
-import { Connection, Schema } from 'mongoose';
+import { Nmdb, Schema } from '@s4p/nmdb';
 import { getConnectionToken, getModelToken } from './common/mongoose.utils';
 import { DEFAULT_DB_CONNECTION } from './mongoose.constants';
 
@@ -8,8 +8,10 @@ export function createMongooseProviders(
 ) {
   const providers = (models || []).map(model => ({
     provide: getModelToken(model.name),
-    useFactory: (connection: Connection) =>
-      connection.model(model.name, model.schema, model.collection),
+    useFactory: (connection: Nmdb) =>
+      connection.model(model.name, model.schema, {
+        collName: model.collection,
+      }),
     inject: [
       connectionName === DEFAULT_DB_CONNECTION
         ? DEFAULT_DB_CONNECTION

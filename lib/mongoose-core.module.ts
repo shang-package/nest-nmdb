@@ -6,7 +6,6 @@ import {
   Provider,
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import * as mongoose from 'mongoose';
 import { defer } from 'rxjs';
 import { getConnectionToken, handleRetry } from './common/mongoose.utils';
 import {
@@ -19,6 +18,8 @@ import {
   MONGOOSE_CONNECTION_NAME,
   MONGOOSE_MODULE_OPTIONS,
 } from './mongoose.constants';
+
+import { Nmdb } from '@s4p/nmdb';
 
 @Global()
 @Module({})
@@ -50,9 +51,15 @@ export class MongooseCoreModule {
     const connectionProvider = {
       provide: mongooseConnectionName,
       useFactory: async (): Promise<any> =>
-        await defer(async () =>
-          mongoose.createConnection(uri, mongooseOptions as any),
-        )
+        await defer(async () => {
+          let nmdb = new Nmdb();
+          nmdb.connect(
+            uri,
+            mongooseOptions,
+          );
+          return nmdb;
+          // mongoose.createConnection(uri, mongooseOptions as any),
+        })
           .pipe(handleRetry(retryAttempts, retryDelay))
           .toPromise(),
     };
@@ -86,12 +93,14 @@ export class MongooseCoreModule {
           ...mongooseOptions
         } = mongooseModuleOptions;
 
-        return await defer(async () =>
-          mongoose.createConnection(
+        return await defer(async () => {
+          let nmdb = new Nmdb();
+          nmdb.connect(
             mongooseModuleOptions.uri,
-            mongooseOptions as any,
-          ),
-        )
+            mongooseOptions,
+          );
+          return nmdb;
+        })
           .pipe(
             handleRetry(
               mongooseModuleOptions.retryAttempts,
